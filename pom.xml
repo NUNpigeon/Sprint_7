@@ -47,7 +47,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Удаляем Allure JUnit 5, добавляем JUnit 4 -->
+        <!-- Добавляем JUnit 4 -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-junit4</artifactId>
@@ -102,7 +102,7 @@
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                     </argLine>
                     <properties>
-                        <!-- Изменяем listener на JUnit 4 -->
+                        <!-- JUnit 4 -->
                         <property>
                             <name>listener</name>
                             <value>io.qameta.allure.junit4.AllureJunit4</value>
