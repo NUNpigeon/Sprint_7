@@ -1,43 +1,26 @@
 import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
-import org.junit.jupiter.api.DisplayName;
-import io.qameta.allure.Step;
+import io.qameta.allure.junit4.DisplayName;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.*;
 
 import java.util.List;
+
+import static org.apache.http.HttpStatus.*;
 
 public class OrderListTest extends ApiTest {
 
     @Test
     @DisplayName("Запрос списка заказов возвращает заказы")
     public void getOrderListReturnsOrders() {
+        ValidatableResponse response = orderApi.getOrders();
 
-        // Отправляем запрос для получения списка заказов
-        ValidatableResponse response = getOrders();
+        response.assertThat().statusCode(SC_OK); // Проверяю, что вернулся код 200 (OK)
 
-        // Проверяем, что статус код ответа 200 (OK)
-        response.assertThat().statusCode(200);
-
-        // Проверяем, что тело ответа не пустое
         response.assertThat().body(notNullValue());
 
-        // Проверяем, что поле "orders" в теле ответа является списком (List)
         response.assertThat().body("orders", instanceOf(List.class));
 
-        // Проверяем, что размер списка заказов больше или равен 0 (то есть список не пустой)
         response.assertThat().body("orders.size()", greaterThanOrEqualTo(0));
-    }
-
-    @Step("Получение списка заказов")
-    public ValidatableResponse getOrders() {
-        return given()
-                .header("Content-type", "application/json")
-                .when()
-                .get("/api/v1/orders")
-                .then().log().all();
     }
 }

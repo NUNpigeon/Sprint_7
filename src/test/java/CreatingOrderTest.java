@@ -5,15 +5,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.example.Order;
-import org.junit.jupiter.api.DisplayName;
-import io.qameta.allure.Step;
+import io.qameta.allure.junit4.DisplayName;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.runners.Parameterized.*;
+import static org.apache.http.HttpStatus.*;
 
 @RunWith(Parameterized.class)
 @DisplayName("Тесты создания заказа")
@@ -26,7 +26,7 @@ public class CreatingOrderTest extends ApiTest {
         this.color = color;
     }
 
-    @Parameterized.Parameters
+    @Parameters
     @DisplayName("Тестовые данные для создания заказа с разными цветами")
     public static Collection<Object[]> getTestData() {
         return Arrays.asList(new Object[][]{
@@ -37,41 +37,23 @@ public class CreatingOrderTest extends ApiTest {
         });
     }
 
-    @Step("Создание заказа и проверка получения трек-номера с цветом: {color}")
     @Test
     @DisplayName("Создание заказа и проверка получения трек-номера")
     public void creatingOrderReturnsTrack() {
-        ValidatableResponse response = createOrder("Naruto", "Uchiha", "Konoha, 142 apt.", "4", "+7 800 355-35-35", 5, "2025-11-01", "Comment", color);
-        response.assertThat().statusCode(201).and().body("track", notNullValue());
-        track = response.extract().path("track").toString(); // Сохраняем трек номер.
+
+        Order order = new Order("Naruto", "Uchiha", "Konoha, 142 apt.", "4", "+7 800 355-35-35", 5, "2025-11-01", "Comment", color);
+
+        ValidatableResponse response = orderApi.createOrder(order);
+
+        response.assertThat().statusCode(SC_CREATED).and().body("track", notNullValue());
+        track = response.extract().path("track").toString();
     }
 
     @After
     public void tearDown() {
         if (track != null) {
-            cancelOrder(track); // Если заказ был создан, отменяем его.
-            track = null; // Сбрасываем значение track.
+            orderApi.cancelOrder(track);
+            track = null;
         }
-    }
-
-    @Step("Отправка запроса на создание заказа с данными: firstName={firstName}, lastName={lastName}, address={address}, metroStation={metroStation}, phone={phone}, rentTime={rentTime}, deliveryDate={deliveryDate}, comment={comment}, color={color}")
-    private ValidatableResponse createOrder(String firstName, String lastName, String address, String metroStation, String phone, int rentTime, String deliveryDate, String comment, List<String> color) {
-        Order order = new Order(firstName, lastName, address, metroStation, phone, rentTime, deliveryDate, comment, color);
-        return given()
-                .header("Content-type", "application/json")
-                .body(order)
-                .when()
-                .post("/api/v1/orders")
-                .then();
-    }
-
-    @Step("Отмена заказа с track: {track}")
-    private void cancelOrder(String track) {
-        given()
-                .header("Content-type", "application/json")
-                .when()
-                .put("/api/v1/orders/cancel?track=" + track)
-                .then()
-                .statusCode(200);
     }
 }
